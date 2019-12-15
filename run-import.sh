@@ -6,7 +6,7 @@ if [[ -z "$1" || -z "$2" ]] ;then
 else
     if [[ $1 != http?(s)://svn/* || $2 != git@git* ]]; then
         echo -e "Invalid URL. Exiting"
-        echo -e "Insira URL no seguinte formato:\n${0##*/} SVN GIT"
+        echo -e "How to insert parameters:\n${0##*/} SVN GIT"
         exit 1
     else
         SVN=$1
