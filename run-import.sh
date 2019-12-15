@@ -21,25 +21,42 @@ function create_dirs(){
     echo ""
     echo "Creating Directories $PROJECT"
     echo "---------------------------------------------"
+    if [ -d ~/$PROJECT.git ]; then
+        echo -e "Removing old directories | $PROJECT.git"
+        rm -rf ~/$PROJECT.git
+    fi
+    if [ -d ~/repo-$PROJECT ]; then
+        echo -e "Removing old directories  | repo-$PROJECT"
+        rm -rf ~/repo-$PROJECT
+    fi
     mkdir -p ~/repo-$PROJECT
     mkdir -p ~/$PROJECT.git
-    echo ""
-    echo "Repositorios Criados"
+    if [ $? -eq 0 ]; then
+        echo "Directories created"
+        clone_repo_svn
+    fi
 }
 
 function clone_repo_svn(){
     cd ~/repo-$PROJECT
     echo ""
-    echo "Clonando repositorio SVN - $SVN"
+    echo "Cloning repositories SVN - $SVN"
     echo "---------------------------------------------"
     svn log --no-auth-cache -q $SVN | awk -F '|' '/^r/ {sub("^ ", "", $2); sub(" $", "", $2); print $2" = "$2" <"$2">"}' | sort -u >authors-transform.txt
-    cat authors-transform.txt
-    time git svn clone $SVN --no-metadata -A authors-transform.txt --stdlayout
+    echo ""
+    time git svn clone $SVN --no-metadata -A authors-transform.txt --stdlayout 
+    if [ $? -eq 1 ]; then
+        echo -e "Error cloning repositories\n"
+        exit 1
+    else
+        git_config
+    fi
 }
+
 
 function git_config(){
     echo ""
-    echo "Convertendo para GIT - $PROJECT"
+    echo "Convert to GIT - $PROJECT"
     echo "---------------------------------------------"
     cd ~/$PROJECT.git
     git init --bare
@@ -55,14 +72,16 @@ function git_config(){
     while read ref
     do
       echo $ref
+      echo ""
       git tag "$ref" "origin/tags/$ref";
       git branch -D "origin/tags/$ref";
     done
+    git_pull
 }
 
 function git_pull(){
     echo ""
-    echo "Enviando para repositorio GIT - $REPO_GIT"
+    echo "Push GIT - $REPO_GIT"
     echo "---------------------------------------------"
     cd ~/$PROJECT.git
     git remote add origin $REPO_GIT
@@ -72,9 +91,6 @@ function git_pull(){
 
 function main(){
     create_dirs
-    clone_repo_svn
-    git_config
-    git_pull
 }
 
 main
